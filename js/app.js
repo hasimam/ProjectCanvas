@@ -18,7 +18,6 @@ let sequenceOrder = [];
 
 let panzoomInstance = null;
 let currentSequenceIndex = -1;
-let activeHotspots = new Set();
 let designMode = false;
 
 // ============================================
@@ -73,18 +72,21 @@ async function loadData() {
         settings = data.settings || settings;
 
         // Transform hotspots from JSON structure to internal format
-        hotspots = (data.hotspots || []).map(h => ({
-            id: h.id,
-            name: h.name,
-            x: h.region.x,
-            y: h.region.y,
-            width: h.region.width,
-            height: h.region.height,
-            title: h.content.title,
-            description: h.content.description,
-            image: h.content.image,
-            sequence: h.sequence
-        }));
+        // Filter out disabled hotspots (enabled defaults to true if not specified)
+        hotspots = (data.hotspots || [])
+            .filter(h => h.enabled !== false)
+            .map(h => ({
+                id: h.id,
+                name: h.name,
+                x: h.region.x,
+                y: h.region.y,
+                width: h.region.width,
+                height: h.region.height,
+                title: h.content.title,
+                description: h.content.description,
+                image: h.content.image,
+                sequence: h.sequence
+            }));
 
         // Sort by sequence for navigation order
         sequenceOrder = hotspots
@@ -196,20 +198,8 @@ function createHotspots() {
 }
 
 function handleHotspotClick(hotspot) {
-    // Toggle active state
-    const hotspotEl = document.querySelector(`.hotspot[data-id="${hotspot.id}"]`);
-
-    if (activeHotspots.has(hotspot.id)) {
-        activeHotspots.delete(hotspot.id);
-        hotspotEl?.classList.remove('active');
-        hideModal();
-    } else {
-        activeHotspots.add(hotspot.id);
-        hotspotEl?.classList.add('active');
-
-        // Show modal (no auto-zoom)
-        showModal(hotspot);
-    }
+    // Simply show modal on click
+    showModal(hotspot);
 }
 
 function zoomToHotspot(hotspot) {
@@ -270,11 +260,6 @@ function goToNext() {
     const hotspot = hotspots.find(h => h.id === hotspotId);
 
     if (hotspot) {
-        // Add to active (accumulate)
-        activeHotspots.add(hotspot.id);
-        const hotspotEl = document.querySelector(`.hotspot[data-id="${hotspot.id}"]`);
-        hotspotEl?.classList.add('active');
-
         showModal(hotspot);
     }
 }
@@ -296,24 +281,12 @@ function goToPrev() {
 }
 
 function showAll() {
-    hotspots.forEach(hotspot => {
-        activeHotspots.add(hotspot.id);
-        const hotspotEl = document.querySelector(`.hotspot[data-id="${hotspot.id}"]`);
-        hotspotEl?.classList.add('active');
-    });
-
     // Reset view to show entire canvas
     centerCanvas();
     hideModal();
 }
 
 function resetView() {
-    // Clear all active states
-    activeHotspots.clear();
-    document.querySelectorAll('.hotspot').forEach(el => {
-        el.classList.remove('active');
-    });
-
     currentSequenceIndex = -1;
     centerCanvas();
     hideModal();

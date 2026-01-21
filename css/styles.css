@@ -70,11 +70,6 @@ body {
     background-color: rgba(52, 152, 219, 0.1);
 }
 
-.hotspot.active {
-    border-color: rgba(46, 204, 113, 0.8);
-    background-color: rgba(46, 204, 113, 0.15);
-}
-
 /* Modal Styles */
 .modal {
     position: fixed;
