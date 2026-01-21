@@ -104,7 +104,23 @@ function setupPanzoom() {
         maxZoom: settings.maxZoom,
         minZoom: settings.minZoom,
         bounds: false,
-        boundsPadding: 0
+        boundsPadding: 0,
+        // Allow clicks/touches on hotspots to pass through
+        beforeMouseDown: function(e) {
+            // Return false to prevent panzoom from handling this event
+            const isHotspot = e.target.closest('.hotspot');
+            const isControlPanel = e.target.closest('#control-panel');
+            const isModal = e.target.closest('#modal');
+            return !isHotspot && !isControlPanel && !isModal;
+        },
+        beforeTouch: function(e) {
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            const isHotspot = target?.closest('.hotspot');
+            const isControlPanel = target?.closest('#control-panel');
+            const isModal = target?.closest('#modal');
+            return !isHotspot && !isControlPanel && !isModal;
+        }
     });
 
     // Center the image initially after a short delay
