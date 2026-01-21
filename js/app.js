@@ -123,12 +123,11 @@ function setupPanzoom() {
 }
 
 function centerCanvas() {
-    // Use getBoundingClientRect for more accurate cross-device measurements
-    const containerRect = canvasContainer.getBoundingClientRect();
-    const containerWidth = containerRect.width;
-    const containerHeight = containerRect.height;
-    const imgWidth = mainImage.naturalWidth;
-    const imgHeight = mainImage.naturalHeight;
+    // Use window dimensions for most reliable mobile measurement
+    const containerWidth = window.innerWidth;
+    const containerHeight = window.innerHeight;
+    const imgWidth = mainImage.naturalWidth || 1376;
+    const imgHeight = mainImage.naturalHeight || 768;
 
     // Calculate scale to fit image
     const scaleX = containerWidth / imgWidth;
@@ -141,17 +140,17 @@ function centerCanvas() {
     const panX = (containerWidth - scaledWidth) / 2;
     const panY = (containerHeight - scaledHeight) / 2;
 
-    // Update start options to the calculated centered position
+    // Apply transform directly for reliability
+    canvasContent.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${panX}, ${panY})`;
+
+    // Sync panzoom internal state
     panzoomInstance.setOptions({
         startX: panX,
         startY: panY,
         startScale: scale
     });
 
-    // Reset to the new start values (this properly applies the transform)
-    panzoomInstance.reset({ animate: true });
-
-    console.log('Centered:', { scale, panX, panY, containerWidth, containerHeight });
+    console.log('Centered:', { scale, panX, panY, containerWidth, containerHeight, imgWidth, imgHeight });
 }
 
 // ============================================
