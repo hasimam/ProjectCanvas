@@ -105,21 +105,16 @@ function setupPanzoom() {
         minZoom: settings.minZoom,
         bounds: false,
         boundsPadding: 0,
-        // Allow clicks/touches on hotspots to pass through
+        // Filter: only handle events that are NOT on hotspots
         beforeMouseDown: function(e) {
-            // Return false to prevent panzoom from handling this event
-            const isHotspot = e.target.closest('.hotspot');
-            const isControlPanel = e.target.closest('#control-panel');
-            const isModal = e.target.closest('#modal');
-            return !isHotspot && !isControlPanel && !isModal;
+            // Return true to let panzoom handle, false to ignore
+            return !e.target.closest('.hotspot');
         },
         beforeTouch: function(e) {
-            const touch = e.touches[0];
-            const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            const isHotspot = target?.closest('.hotspot');
-            const isControlPanel = target?.closest('#control-panel');
-            const isModal = target?.closest('#modal');
-            return !isHotspot && !isControlPanel && !isModal;
+            // Return true to let panzoom handle, false to ignore
+            if (!e.touches || !e.touches[0]) return true;
+            const target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            return !target || !target.closest('.hotspot');
         }
     });
 
@@ -189,6 +184,14 @@ function createHotspots() {
 
         el.addEventListener('click', (e) => {
             if (designMode) return; // Don't trigger in design mode
+            e.stopPropagation();
+            handleHotspotClick(hotspot);
+        });
+
+        // Touch support for mobile (touch-action: none prevents click on touch)
+        el.addEventListener('touchend', (e) => {
+            if (designMode) return;
+            e.preventDefault();
             e.stopPropagation();
             handleHotspotClick(hotspot);
         });
