@@ -38,7 +38,6 @@ const modalClose = document.querySelector('.modal-close');
 
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
-const btnShowAll = document.getElementById('btn-show-all');
 const btnReset = document.getElementById('btn-reset');
 
 // ============================================
@@ -100,22 +99,12 @@ async function loadData() {
 }
 
 function setupPanzoom() {
-    panzoomInstance = Panzoom(canvasContent, {
-        maxScale: settings.maxZoom,
-        minScale: settings.minZoom,
-        contain: false,
-        cursor: 'grab',
-        panOnlyWhenZoomed: false,
-        animate: true,
-        startScale: 1,
-        startX: 0,
-        startY: 0
-    });
-
-    // Enable mouse wheel zoom
-    canvasContainer.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        panzoomInstance.zoomWithWheel(e);
+    // anvaka/panzoom has different API
+    panzoomInstance = panzoom(canvasContent, {
+        maxZoom: settings.maxZoom,
+        minZoom: settings.minZoom,
+        bounds: false,
+        boundsPadding: 0
     });
 
     // Center the image initially after a short delay
@@ -140,39 +129,11 @@ function centerCanvas() {
     const panX = (containerWidth - scaledWidth) / 2;
     const panY = (containerHeight - scaledHeight) / 2;
 
-    // Destroy existing panzoom
-    if (panzoomInstance) {
-        panzoomInstance.destroy();
-    }
+    // anvaka/panzoom: use zoomAbs and moveTo for precise positioning
+    panzoomInstance.zoomAbs(0, 0, scale);
+    panzoomInstance.moveTo(panX, panY);
 
-    // Set CSS transform directly FIRST
-    canvasContent.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${panX}, ${panY})`;
-
-    // Create panzoom - it will read current transform from element
-    panzoomInstance = Panzoom(canvasContent, {
-        maxScale: settings.maxZoom,
-        minScale: settings.minZoom,
-        contain: false,
-        cursor: 'grab',
-        panOnlyWhenZoomed: false,
-        animate: true
-    });
-
-    // Re-add wheel listener
-    canvasContainer.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        panzoomInstance.zoomWithWheel(e);
-    }, { passive: false });
-
-    console.log('v5 Transform:', canvasContent.style.transform);
-
-    // Re-enable mouse wheel zoom
-    canvasContainer.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        panzoomInstance.zoomWithWheel(e);
-    }, { passive: false });
-
-    console.log('Centered v3:', { scale, panX, panY, containerWidth, containerHeight, imgWidth, imgHeight });
+    console.log('v7 anvaka:', { scale, panX, panY, containerWidth, containerHeight });
 }
 
 // ============================================
@@ -239,9 +200,10 @@ function zoomToHotspot(hotspot) {
     const panX = containerRect.width / 2 - hotspotCenterX * targetScale;
     const panY = containerRect.height / 2 - hotspotCenterY * targetScale;
 
-    panzoomInstance.zoom(targetScale, { animate: true });
+    // anvaka/panzoom: use smoothZoomAbs and smoothMoveTo for animation
+    panzoomInstance.smoothZoomAbs(containerRect.width / 2, containerRect.height / 2, targetScale);
     setTimeout(() => {
-        panzoomInstance.pan(panX, panY, { animate: true });
+        panzoomInstance.smoothMoveTo(panX, panY);
     }, 100);
 }
 
@@ -303,11 +265,6 @@ function goToPrev() {
     }
 }
 
-function showAll() {
-    // Reset view to show entire canvas
-    centerCanvas();
-    hideModal();
-}
 
 function resetView() {
     currentSequenceIndex = -1;
@@ -342,7 +299,6 @@ function setupEventListeners() {
     // Control panel buttons
     btnNext.addEventListener('click', goToNext);
     btnPrev.addEventListener('click', goToPrev);
-    btnShowAll.addEventListener('click', showAll);
     btnReset.addEventListener('click', resetView);
 }
 
@@ -366,12 +322,12 @@ function enterDesignMode() {
     document.body.classList.add('design-mode');
     designPanel.classList.remove('hidden');
 
-    // Disable panzoom completely
-    panzoomInstance.setOptions({ disablePan: true, disableZoom: true });
+    // Disable panzoom completely (anvaka API)
+    panzoomInstance.pause();
 
     // Reset to scale 1 for easier editing
-    panzoomInstance.zoom(1, { animate: true });
-    panzoomInstance.pan(0, 0, { animate: true });
+    panzoomInstance.smoothZoomAbs(0, 0, 1);
+    panzoomInstance.smoothMoveTo(0, 0);
 
     // Disable pointer events on the panzoom element to let hotspots receive events
     canvasContent.style.pointerEvents = 'none';
@@ -392,7 +348,8 @@ function exitDesignMode() {
     mainImage.style.pointerEvents = '';
     hotspotsContainer.style.pointerEvents = '';
 
-    panzoomInstance.setOptions({ disablePan: false, disableZoom: false });
+    // Re-enable panzoom (anvaka API)
+    panzoomInstance.resume();
     centerCanvas();
     console.log('Design mode exited');
 }
