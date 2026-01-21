@@ -145,20 +145,26 @@ function centerCanvas() {
         panzoomInstance.destroy();
     }
 
-    // Apply the transform FIRST so it's visually correct
-    canvasContent.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${panX}, ${panY})`;
+    // Clear transform and force reflow
+    canvasContent.style.transform = 'none';
+    canvasContent.offsetHeight; // Force reflow
 
-    // Create panzoom to match the current visual state
+    // Create panzoom with centered values
     panzoomInstance = Panzoom(canvasContent, {
         maxScale: settings.maxZoom,
         minScale: settings.minZoom,
         contain: false,
         cursor: 'grab',
         panOnlyWhenZoomed: false,
-        animate: true,
+        animate: false,
         startX: panX,
         startY: panY,
         startScale: scale
+    });
+
+    // Force panzoom to apply the transform immediately
+    requestAnimationFrame(() => {
+        canvasContent.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${panX}, ${panY})`;
     });
 
     // Re-enable mouse wheel zoom
