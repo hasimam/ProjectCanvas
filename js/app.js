@@ -1,0 +1,653 @@
+/**
+ * Project Canvas - Interactive Journal
+ * Main Application Script
+ */
+
+// ============================================
+// DATA - Loaded from data.json
+// ============================================
+
+let canvasConfig = { width: 1376, height: 768 };
+let settings = { zoomOnClick: 1.5, minZoom: 0.5, maxZoom: 3 };
+let hotspots = [];
+let sequenceOrder = [];
+
+// ============================================
+// APPLICATION STATE
+// ============================================
+
+let panzoomInstance = null;
+let currentSequenceIndex = -1;
+let activeHotspots = new Set();
+let designMode = false;
+
+// ============================================
+// DOM ELEMENTS
+// ============================================
+
+const canvasContainer = document.getElementById('canvas-container');
+const canvasContent = document.getElementById('canvas-content');
+const hotspotsContainer = document.getElementById('hotspots');
+const mainImage = document.getElementById('main-image');
+
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modal-title');
+const modalDescription = document.getElementById('modal-description');
+const modalImageContainer = document.querySelector('.modal-image');
+const modalDetailImage = document.getElementById('modal-detail-image');
+const modalClose = document.querySelector('.modal-close');
+
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+const btnShowAll = document.getElementById('btn-show-all');
+const btnReset = document.getElementById('btn-reset');
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+async function init() {
+    // Load data from JSON
+    await loadData();
+
+    // Wait for image to load to get dimensions
+    if (mainImage.complete) {
+        setupPanzoom();
+        createHotspots();
+    } else {
+        mainImage.onload = () => {
+            setupPanzoom();
+            createHotspots();
+        };
+    }
+
+    setupEventListeners();
+}
+
+async function loadData() {
+    try {
+        const response = await fetch('js/data.json');
+        const data = await response.json();
+
+        canvasConfig = data.canvas || canvasConfig;
+        settings = data.settings || settings;
+
+        // Transform hotspots from JSON structure to internal format
+        hotspots = (data.hotspots || []).map(h => ({
+            id: h.id,
+            name: h.name,
+            x: h.region.x,
+            y: h.region.y,
+            width: h.region.width,
+            height: h.region.height,
+            title: h.content.title,
+            description: h.content.description,
+            image: h.content.image,
+            sequence: h.sequence
+        }));
+
+        // Sort by sequence for navigation order
+        sequenceOrder = hotspots
+            .sort((a, b) => a.sequence - b.sequence)
+            .map(h => h.id);
+
+        console.log(`Loaded ${hotspots.length} hotspots`);
+    } catch (error) {
+        console.error('Failed to load data.json:', error);
+    }
+}
+
+function setupPanzoom() {
+    panzoomInstance = Panzoom(canvasContent, {
+        maxScale: settings.maxZoom,
+        minScale: settings.minZoom,
+        contain: false,
+        cursor: 'grab',
+        panOnlyWhenZoomed: false,
+        animate: true,
+        startScale: 1,
+        startX: 0,
+        startY: 0
+    });
+
+    // Enable mouse wheel zoom
+    canvasContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        panzoomInstance.zoomWithWheel(e);
+    });
+
+    // Center the image initially after a short delay
+    setTimeout(centerCanvas, 100);
+}
+
+function centerCanvas() {
+    const containerWidth = canvasContainer.clientWidth;
+    const containerHeight = canvasContainer.clientHeight;
+    const imgWidth = mainImage.naturalWidth;
+    const imgHeight = mainImage.naturalHeight;
+
+    // Calculate scale to fit image
+    const scaleX = containerWidth / imgWidth;
+    const scaleY = containerHeight / imgHeight;
+    const scale = Math.min(scaleX, scaleY) * 0.9;
+
+    // Calculate centered position
+    const scaledWidth = imgWidth * scale;
+    const scaledHeight = imgHeight * scale;
+    const panX = (containerWidth - scaledWidth) / 2;
+    const panY = (containerHeight - scaledHeight) / 2;
+
+    // Update start options to the calculated centered position
+    panzoomInstance.setOptions({
+        startX: panX,
+        startY: panY,
+        startScale: scale
+    });
+
+    // Reset to the new start values (this properly applies the transform)
+    panzoomInstance.reset({ animate: true });
+
+    console.log('Centered:', { scale, panX, panY, containerWidth, containerHeight });
+}
+
+// ============================================
+// HOTSPOTS
+// ============================================
+
+function createHotspots() {
+    hotspotsContainer.innerHTML = '';
+
+    hotspots.forEach(hotspot => {
+        const el = document.createElement('div');
+        el.className = 'hotspot';
+        el.dataset.id = hotspot.id;
+        el.style.left = `${hotspot.x}px`;
+        el.style.top = `${hotspot.y}px`;
+        el.style.width = `${hotspot.width}px`;
+        el.style.height = `${hotspot.height}px`;
+
+        // Add label for design mode (ID only, editable)
+        const label = document.createElement('div');
+        label.className = 'hotspot-label';
+        label.textContent = hotspot.id;
+        label.addEventListener('click', (e) => {
+            if (!designMode) return;
+            e.stopPropagation();
+            editHotspotId(hotspot, label);
+        });
+        el.appendChild(label);
+
+        // Add resize handles for design mode
+        ['nw', 'ne', 'sw', 'se'].forEach(corner => {
+            const handle = document.createElement('div');
+            handle.className = `hotspot-resize ${corner}`;
+            handle.dataset.corner = corner;
+            el.appendChild(handle);
+        });
+
+        el.addEventListener('click', (e) => {
+            if (designMode) return; // Don't trigger in design mode
+            e.stopPropagation();
+            handleHotspotClick(hotspot);
+        });
+
+        hotspotsContainer.appendChild(el);
+    });
+}
+
+function handleHotspotClick(hotspot) {
+    // Toggle active state
+    const hotspotEl = document.querySelector(`.hotspot[data-id="${hotspot.id}"]`);
+
+    if (activeHotspots.has(hotspot.id)) {
+        activeHotspots.delete(hotspot.id);
+        hotspotEl?.classList.remove('active');
+        hideModal();
+    } else {
+        activeHotspots.add(hotspot.id);
+        hotspotEl?.classList.add('active');
+
+        // Show modal (no auto-zoom)
+        showModal(hotspot);
+    }
+}
+
+function zoomToHotspot(hotspot) {
+    const containerRect = canvasContainer.getBoundingClientRect();
+
+    // Calculate center of hotspot
+    const hotspotCenterX = hotspot.x + hotspot.width / 2;
+    const hotspotCenterY = hotspot.y + hotspot.height / 2;
+
+    // Target scale from settings
+    const targetScale = settings.zoomOnClick;
+
+    // Calculate pan to center the hotspot
+    const panX = containerRect.width / 2 - hotspotCenterX * targetScale;
+    const panY = containerRect.height / 2 - hotspotCenterY * targetScale;
+
+    panzoomInstance.zoom(targetScale, { animate: true });
+    setTimeout(() => {
+        panzoomInstance.pan(panX, panY, { animate: true });
+    }, 100);
+}
+
+// ============================================
+// MODAL
+// ============================================
+
+function showModal(hotspot) {
+    modalTitle.textContent = hotspot.title || '';
+    modalDescription.textContent = hotspot.description || '';
+
+    if (hotspot.image) {
+        modalDetailImage.src = hotspot.image;
+        modalImageContainer.classList.remove('hidden');
+    } else {
+        modalImageContainer.classList.add('hidden');
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function hideModal() {
+    modal.classList.add('hidden');
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+
+function goToNext() {
+    if (sequenceOrder.length === 0) return;
+
+    currentSequenceIndex++;
+    if (currentSequenceIndex >= sequenceOrder.length) {
+        currentSequenceIndex = 0;
+    }
+
+    const hotspotId = sequenceOrder[currentSequenceIndex];
+    const hotspot = hotspots.find(h => h.id === hotspotId);
+
+    if (hotspot) {
+        // Add to active (accumulate)
+        activeHotspots.add(hotspot.id);
+        const hotspotEl = document.querySelector(`.hotspot[data-id="${hotspot.id}"]`);
+        hotspotEl?.classList.add('active');
+
+        showModal(hotspot);
+    }
+}
+
+function goToPrev() {
+    if (sequenceOrder.length === 0) return;
+
+    currentSequenceIndex--;
+    if (currentSequenceIndex < 0) {
+        currentSequenceIndex = sequenceOrder.length - 1;
+    }
+
+    const hotspotId = sequenceOrder[currentSequenceIndex];
+    const hotspot = hotspots.find(h => h.id === hotspotId);
+
+    if (hotspot) {
+        showModal(hotspot);
+    }
+}
+
+function showAll() {
+    hotspots.forEach(hotspot => {
+        activeHotspots.add(hotspot.id);
+        const hotspotEl = document.querySelector(`.hotspot[data-id="${hotspot.id}"]`);
+        hotspotEl?.classList.add('active');
+    });
+
+    // Reset view to show entire canvas
+    centerCanvas();
+    hideModal();
+}
+
+function resetView() {
+    // Clear all active states
+    activeHotspots.clear();
+    document.querySelectorAll('.hotspot').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    currentSequenceIndex = -1;
+    centerCanvas();
+    hideModal();
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
+function setupEventListeners() {
+    // Modal close
+    modalClose.addEventListener('click', hideModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            hideModal();
+        }
+    });
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideModal();
+        } else if (e.key === 'ArrowLeft') {
+            goToNext(); // RTL: left arrow = next
+        } else if (e.key === 'ArrowRight') {
+            goToPrev(); // RTL: right arrow = prev
+        }
+    });
+
+    // Control panel buttons
+    btnNext.addEventListener('click', goToNext);
+    btnPrev.addEventListener('click', goToPrev);
+    btnShowAll.addEventListener('click', showAll);
+    btnReset.addEventListener('click', resetView);
+}
+
+// ============================================
+// DESIGN MODE
+// ============================================
+
+const designPanel = document.getElementById('design-panel');
+const btnDesign = document.getElementById('btn-design');
+const btnExitDesign = document.getElementById('btn-exit-design');
+const btnSaveDesign = document.getElementById('btn-save-design');
+const btnAddHotspot = document.getElementById('btn-add-hotspot');
+
+let dragTarget = null;
+let resizeTarget = null;
+let resizeCorner = null;
+let startX, startY, startLeft, startTop, startWidth, startHeight;
+
+function enterDesignMode() {
+    designMode = true;
+    document.body.classList.add('design-mode');
+    designPanel.classList.remove('hidden');
+
+    // Disable panzoom completely
+    panzoomInstance.setOptions({ disablePan: true, disableZoom: true });
+
+    // Reset to scale 1 for easier editing
+    panzoomInstance.zoom(1, { animate: true });
+    panzoomInstance.pan(0, 0, { animate: true });
+
+    // Disable pointer events on the panzoom element to let hotspots receive events
+    canvasContent.style.pointerEvents = 'none';
+    mainImage.style.pointerEvents = 'none';
+    hotspotsContainer.style.pointerEvents = 'auto';
+
+    hideModal();
+    console.log('Design mode entered');
+}
+
+function exitDesignMode() {
+    designMode = false;
+    document.body.classList.remove('design-mode');
+    designPanel.classList.add('hidden');
+
+    // Restore pointer events
+    canvasContent.style.pointerEvents = '';
+    mainImage.style.pointerEvents = '';
+    hotspotsContainer.style.pointerEvents = '';
+
+    panzoomInstance.setOptions({ disablePan: false, disableZoom: false });
+    centerCanvas();
+    console.log('Design mode exited');
+}
+
+function generateJSON() {
+    const output = {
+        canvas: canvasConfig,
+        settings: settings,
+        hotspots: hotspots.map(h => ({
+            id: h.id,
+            name: h.name,
+            region: {
+                x: Math.round(h.x),
+                y: Math.round(h.y),
+                width: Math.round(h.width),
+                height: Math.round(h.height)
+            },
+            content: {
+                title: h.title,
+                description: h.description,
+                image: h.image || ""
+            },
+            sequence: h.sequence
+        }))
+    };
+    return JSON.stringify(output, null, 2);
+}
+
+function saveDesign() {
+    const json = generateJSON();
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(json).then(() => {
+        alert('JSON copied to clipboard!\n\nPaste it to me and I will update data.json for you.');
+    }).catch(() => {
+        console.log(json);
+        alert('Check browser console (F12) for JSON output');
+    });
+}
+
+function editHotspotId(hotspot, labelEl) {
+    const currentId = hotspot.id;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentId;
+    input.className = 'hotspot-id-input';
+    input.style.cssText = `
+        width: 50px;
+        padding: 2px 4px;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+        border: 2px solid #27ae60;
+        border-radius: 4px;
+        background: #fff;
+        color: #333;
+        outline: none;
+    `;
+
+    labelEl.textContent = '';
+    labelEl.appendChild(input);
+    input.focus();
+    input.select();
+
+    const saveId = () => {
+        const newId = input.value.trim();
+        if (newId && newId !== currentId) {
+            // Update hotspot data
+            hotspot.id = newId;
+
+            // Update the DOM element's data-id
+            const hotspotEl = labelEl.closest('.hotspot');
+            if (hotspotEl) {
+                hotspotEl.dataset.id = newId;
+            }
+        }
+        labelEl.textContent = hotspot.id;
+    };
+
+    input.addEventListener('blur', saveId);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            input.blur();
+        } else if (e.key === 'Escape') {
+            input.value = currentId;
+            input.blur();
+        }
+    });
+}
+
+function addHotspot() {
+    const newId = (Math.max(...hotspots.map(h => parseInt(h.id) || 0), 0) + 1).toString();
+
+    // Place new hotspot at top-left visible area
+    const newHotspot = {
+        id: newId,
+        name: `New ${newId}`,
+        x: 50,
+        y: 50,
+        width: 120,
+        height: 60,
+        title: '',
+        description: '',
+        image: '',
+        sequence: hotspots.length + 1
+    };
+    hotspots.push(newHotspot);
+    createHotspots();
+
+    // Flash the new hotspot to make it visible
+    setTimeout(() => {
+        const newEl = document.querySelector(`.hotspot[data-id="${newId}"]`);
+        if (newEl) {
+            newEl.classList.add('new-hotspot');
+            setTimeout(() => newEl.classList.remove('new-hotspot'), 1500);
+        }
+    }, 50);
+}
+
+function setupDesignDragHandlers() {
+    console.log('Setting up design drag handlers...');
+
+    // Add listeners to the hotspotsContainer directly
+    hotspotsContainer.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+
+    console.log('Design drag handlers set up');
+}
+
+function onPointerDown(e) {
+    console.log('Pointer down event fired!', e.target);
+
+    if (!designMode) {
+        console.log('Not in design mode, ignoring');
+        return;
+    }
+
+    const handle = e.target.closest('.hotspot-resize');
+    const hotspotEl = e.target.closest('.hotspot');
+
+    if (!hotspotEl) {
+        console.log('Not on a hotspot');
+        return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Capture pointer for reliable tracking
+    hotspotEl.setPointerCapture(e.pointerId);
+
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = parseInt(hotspotEl.style.left) || 0;
+    startTop = parseInt(hotspotEl.style.top) || 0;
+    startWidth = parseInt(hotspotEl.style.width) || 100;
+    startHeight = parseInt(hotspotEl.style.height) || 50;
+
+    if (handle) {
+        resizeTarget = hotspotEl;
+        resizeCorner = handle.dataset.corner;
+        console.log('Resize started:', resizeCorner, 'Size:', startWidth, 'x', startHeight);
+    } else {
+        dragTarget = hotspotEl;
+        console.log('Drag started at:', startLeft, startTop);
+    }
+}
+
+function onPointerMove(e) {
+    if (!dragTarget && !resizeTarget) return;
+
+    e.preventDefault();
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (dragTarget) {
+        const newLeft = Math.max(0, startLeft + dx);
+        const newTop = Math.max(0, startTop + dy);
+
+        dragTarget.style.left = `${newLeft}px`;
+        dragTarget.style.top = `${newTop}px`;
+
+        const id = dragTarget.dataset.id;
+        const hotspot = hotspots.find(h => h.id === id);
+        if (hotspot) {
+            hotspot.x = newLeft;
+            hotspot.y = newTop;
+        }
+    }
+
+    if (resizeTarget) {
+        let newLeft = startLeft;
+        let newTop = startTop;
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+
+        if (resizeCorner.includes('e')) newWidth = Math.max(30, startWidth + dx);
+        if (resizeCorner.includes('w')) {
+            newWidth = Math.max(30, startWidth - dx);
+            newLeft = startLeft + dx;
+        }
+        if (resizeCorner.includes('s')) newHeight = Math.max(20, startHeight + dy);
+        if (resizeCorner.includes('n')) {
+            newHeight = Math.max(20, startHeight - dy);
+            newTop = startTop + dy;
+        }
+
+        resizeTarget.style.left = `${newLeft}px`;
+        resizeTarget.style.top = `${newTop}px`;
+        resizeTarget.style.width = `${newWidth}px`;
+        resizeTarget.style.height = `${newHeight}px`;
+
+        const id = resizeTarget.dataset.id;
+        const hotspot = hotspots.find(h => h.id === id);
+        if (hotspot) {
+            hotspot.x = newLeft;
+            hotspot.y = newTop;
+            hotspot.width = newWidth;
+            hotspot.height = newHeight;
+        }
+    }
+}
+
+function onPointerUp(e) {
+    if (dragTarget) {
+        dragTarget.releasePointerCapture?.(e.pointerId);
+        console.log('Drag ended:', dragTarget.style.left, dragTarget.style.top);
+    }
+    if (resizeTarget) {
+        resizeTarget.releasePointerCapture?.(e.pointerId);
+        console.log('Resize ended:', resizeTarget.style.width, resizeTarget.style.height);
+    }
+    dragTarget = null;
+    resizeTarget = null;
+    resizeCorner = null;
+}
+
+// Design mode event listeners
+btnDesign?.addEventListener('click', enterDesignMode);
+btnExitDesign?.addEventListener('click', exitDesignMode);
+btnSaveDesign?.addEventListener('click', saveDesign);
+btnAddHotspot?.addEventListener('click', addHotspot);
+
+// ============================================
+// START APPLICATION
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    init().then(() => {
+        setupDesignDragHandlers();
+    });
+});
