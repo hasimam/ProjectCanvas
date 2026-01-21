@@ -145,27 +145,26 @@ function centerCanvas() {
         panzoomInstance.destroy();
     }
 
-    // Clear transform and force reflow
-    canvasContent.style.transform = 'none';
-    canvasContent.offsetHeight; // Force reflow
+    // Set CSS transform directly FIRST
+    canvasContent.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${panX}, ${panY})`;
 
-    // Create panzoom with centered values
+    // Create panzoom - it will read current transform from element
     panzoomInstance = Panzoom(canvasContent, {
         maxScale: settings.maxZoom,
         minScale: settings.minZoom,
         contain: false,
         cursor: 'grab',
         panOnlyWhenZoomed: false,
-        animate: false,
-        startX: panX,
-        startY: panY,
-        startScale: scale
+        animate: true
     });
 
-    // Force panzoom to apply the transform immediately
-    requestAnimationFrame(() => {
-        canvasContent.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${panX}, ${panY})`;
-    });
+    // Re-add wheel listener
+    canvasContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        panzoomInstance.zoomWithWheel(e);
+    }, { passive: false });
+
+    console.log('v5 Transform:', canvasContent.style.transform);
 
     // Re-enable mouse wheel zoom
     canvasContainer.addEventListener('wheel', (e) => {
@@ -173,7 +172,7 @@ function centerCanvas() {
         panzoomInstance.zoomWithWheel(e);
     }, { passive: false });
 
-    console.log('Centered:', { scale, panX, panY, containerWidth, containerHeight, imgWidth, imgHeight });
+    console.log('Centered v3:', { scale, panX, panY, containerWidth, containerHeight, imgWidth, imgHeight });
 }
 
 // ============================================
