@@ -105,16 +105,14 @@ function setupPanzoom() {
         minZoom: settings.minZoom,
         bounds: false,
         boundsPadding: 0,
-        // Filter: only handle events that are NOT on hotspots
+        // anvaka/panzoom: return true to PREVENT handling, false to ALLOW
         beforeMouseDown: function(e) {
-            // Return true to let panzoom handle, false to ignore
-            return !e.target.closest('.hotspot');
+            return !!e.target.closest('.hotspot');
         },
         beforeTouch: function(e) {
-            // Return true to let panzoom handle, false to ignore
-            if (!e.touches || !e.touches[0]) return true;
+            if (!e.touches || !e.touches[0]) return false;
             const target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-            return !target || !target.closest('.hotspot');
+            return !!(target && target.closest('.hotspot'));
         }
     });
 
