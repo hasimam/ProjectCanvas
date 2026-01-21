@@ -19,6 +19,7 @@ let sequenceOrder = [];
 let panzoomInstance = null;
 let currentSequenceIndex = -1;
 let designMode = false;
+let lastTouchTap = 0;
 
 // ============================================
 // DOM ELEMENTS
@@ -182,13 +183,16 @@ function createHotspots() {
 
         el.addEventListener('click', (e) => {
             if (designMode) return; // Don't trigger in design mode
+            if (Date.now() - lastTouchTap < 500) return;
             e.stopPropagation();
             handleHotspotClick(hotspot);
         });
 
-        // Touch support for mobile (touch-action: none prevents click on touch)
-        el.addEventListener('touchend', (e) => {
+        // Pointer support for mobile taps (more reliable than touchend on some browsers)
+        el.addEventListener('pointerup', (e) => {
             if (designMode) return;
+            if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+            lastTouchTap = Date.now();
             e.preventDefault();
             e.stopPropagation();
             handleHotspotClick(hotspot);
