@@ -123,8 +123,10 @@ function setupPanzoom() {
 }
 
 function centerCanvas() {
-    const containerWidth = canvasContainer.clientWidth;
-    const containerHeight = canvasContainer.clientHeight;
+    // Use getBoundingClientRect for more accurate cross-device measurements
+    const containerRect = canvasContainer.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
     const imgWidth = mainImage.naturalWidth;
     const imgHeight = mainImage.naturalHeight;
 
