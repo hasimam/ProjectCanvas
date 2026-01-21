@@ -25,6 +25,7 @@ body {
     background-color: #e8e8e8;
     cursor: grab;
     direction: ltr; /* Force LTR for correct transform calculations */
+    touch-action: none; /* Prevent browser zoom/pan, let panzoom handle it */
 }
 
 #canvas-container:active {
@@ -37,6 +38,7 @@ body {
     top: 0;
     transform-origin: 0 0;
     will-change: transform;
+    touch-action: none; /* Let panzoom handle touch gestures */
 }
 
 #main-image {
