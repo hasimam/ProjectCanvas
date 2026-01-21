@@ -108,6 +108,7 @@
     {
       "id": "10",
       "name": "نور",
+      "enabled": false,
       "region": {
         "x": 151,
         "y": 300,
@@ -124,6 +125,7 @@
     {
       "id": "11",
       "name": "ثمانية - يسار وسط",
+      "enabled": false,
       "region": {
         "x": 298,
         "y": 114,
@@ -140,6 +142,7 @@
     {
       "id": "12",
       "name": "ثمانية - يسار سفلي",
+      "enabled": false,
       "region": {
         "x": 72,
         "y": 390,
@@ -188,6 +191,7 @@
     {
       "id": "15",
       "name": "وعي",
+      "enabled": false,
       "region": {
         "x": 1241,
         "y": 102,
@@ -204,6 +208,7 @@
     {
       "id": "16",
       "name": "ثاني",
+      "enabled": false,
       "region": {
         "x": 1130,
         "y": 71,
@@ -220,6 +225,7 @@
     {
       "id": "17",
       "name": "ثالث",
+      "enabled": false,
       "region": {
         "x": 1010,
         "y": 62,
@@ -236,6 +242,7 @@
     {
       "id": "18",
       "name": "خمسة",
+      "enabled": false,
       "region": {
         "x": 1260,
         "y": 335,
@@ -252,6 +259,7 @@
     {
       "id": "19",
       "name": "ثمانية - أصفر",
+      "enabled": false,
       "region": {
         "x": 468,
         "y": 571,
@@ -268,6 +276,7 @@
     {
       "id": "20",
       "name": "ثمانية - أخضر",
+      "enabled": false,
       "region": {
         "x": 583,
         "y": 572,
@@ -284,6 +293,7 @@
     {
       "id": "21",
       "name": "ثمانية - وردي",
+      "enabled": false,
       "region": {
         "x": 694,
         "y": 571,
@@ -300,6 +310,7 @@
     {
       "id": "22",
       "name": "ثمانية - أزرق",
+      "enabled": false,
       "region": {
         "x": 805,
         "y": 570,
@@ -316,6 +327,7 @@
     {
       "id": "23",
       "name": "New 23",
+      "enabled": false,
       "region": {
         "x": 11,
         "y": 157,
@@ -332,6 +344,7 @@
     {
       "id": "24",
       "name": "New 24",
+      "enabled": false,
       "region": {
         "x": 1177,
         "y": 567,
@@ -348,6 +361,7 @@
     {
       "id": "25",
       "name": "New 25",
+      "enabled": false,
       "region": {
         "x": 998,
         "y": 565,
@@ -364,6 +378,7 @@
     {
       "id": "26",
       "name": "New 26",
+      "enabled": false,
       "region": {
         "x": 1164,
         "y": 336,
@@ -380,6 +395,7 @@
     {
       "id": "27",
       "name": "New 27",
+      "enabled": false,
       "region": {
         "x": 1068,
         "y": 334,
@@ -396,6 +412,7 @@
     {
       "id": "28",
       "name": "New 28",
+      "enabled": false,
       "region": {
         "x": 978,
         "y": 335,
@@ -492,6 +509,7 @@
     {
       "id": "34",
       "name": "New 34",
+      "enabled": false,
       "region": {
         "x": 997,
         "y": 683,
@@ -508,6 +526,7 @@
     {
       "id": "35",
       "name": "New 35",
+      "enabled": false,
       "region": {
         "x": 1176,
         "y": 627,
@@ -524,6 +543,7 @@
     {
       "id": "36",
       "name": "New 36",
+      "enabled": false,
       "region": {
         "x": 188,
         "y": 540,
@@ -540,6 +560,7 @@
     {
       "id": "37",
       "name": "New 37",
+      "enabled": false,
       "region": {
         "x": 187,
         "y": 608,
