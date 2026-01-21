@@ -622,5 +622,11 @@ btnAddHotspot?.addEventListener('click', addHotspot);
 document.addEventListener('DOMContentLoaded', () => {
     init().then(() => {
         setupDesignDragHandlers();
+
+        // Show design button only on localhost
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            const designBtn = document.getElementById('btn-design');
+            if (designBtn) designBtn.style.display = '';
+        }
     });
 });
