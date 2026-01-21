@@ -140,15 +140,36 @@ function centerCanvas() {
     const panX = (containerWidth - scaledWidth) / 2;
     const panY = (containerHeight - scaledHeight) / 2;
 
-    // Apply transform directly for reliability
-    canvasContent.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${panX}, ${panY})`;
+    // Destroy existing panzoom
+    if (panzoomInstance) {
+        panzoomInstance.destroy();
+    }
 
-    // Sync panzoom internal state
-    panzoomInstance.setOptions({
+    // Clear any existing transform
+    canvasContent.style.transform = '';
+
+    // Create new panzoom with centered values
+    panzoomInstance = Panzoom(canvasContent, {
+        maxScale: settings.maxZoom,
+        minScale: settings.minZoom,
+        contain: false,
+        cursor: 'grab',
+        panOnlyWhenZoomed: false,
+        animate: false,
         startX: panX,
         startY: panY,
         startScale: scale
     });
+
+    // Force the transform to apply
+    panzoomInstance.zoom(scale, { animate: false });
+    panzoomInstance.pan(panX, panY, { animate: false });
+
+    // Re-enable mouse wheel zoom
+    canvasContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        panzoomInstance.zoomWithWheel(e);
+    }, { passive: false });
 
     console.log('Centered:', { scale, panX, panY, containerWidth, containerHeight, imgWidth, imgHeight });
 }
