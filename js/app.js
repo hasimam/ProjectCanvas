@@ -65,7 +65,12 @@ async function init() {
 
 async function loadData() {
     try {
-        const response = await fetch('js/data.json');
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const apiUrl = (!isLocal && typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL)
+            ? `${CONFIG.API_BASE_URL}/api/canvas`
+            : 'js/data.json';
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
         canvasConfig = data.canvas || canvasConfig;
@@ -95,7 +100,9 @@ async function loadData() {
 
         console.log(`Loaded ${hotspots.length} hotspots`);
     } catch (error) {
-        console.error('Failed to load data.json:', error);
+        console.error('Failed to load data:', error);
+        document.getElementById('canvas-container').innerHTML =
+            '<div style="text-align:center;padding:2rem;color:#666;">Unable to load content. Please try again later.</div>';
     }
 }
 
