@@ -31,11 +31,25 @@ const hotspotsContainer = document.getElementById('hotspots');
 const mainImage = document.getElementById('main-image');
 
 const modal = document.getElementById('modal');
+const modalClose = document.querySelector('.modal-close');
+
+// Text type elements
+const modalBodyText = document.querySelector('.modal-body-text');
 const modalTitle = document.getElementById('modal-title');
 const modalDescription = document.getElementById('modal-description');
 const modalImageContainer = document.querySelector('.modal-image');
 const modalDetailImage = document.getElementById('modal-detail-image');
-const modalClose = document.querySelector('.modal-close');
+
+// Image type elements
+const modalBodyImage = document.querySelector('.modal-body-image');
+const modalImageTitle = document.getElementById('modal-image-title');
+const modalFullImage = document.getElementById('modal-full-image');
+
+// Video type elements
+const modalBodyVideo = document.querySelector('.modal-body-video');
+const modalVideoTitle = document.getElementById('modal-video-title');
+const modalVideo = document.getElementById('modal-video');
+const modalVideoSource = document.getElementById('modal-video-source');
 
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
@@ -83,6 +97,7 @@ async function loadData() {
             .map(h => ({
                 id: h.id,
                 name: h.name,
+                type: h.type || 'text',
                 x: h.region.x,
                 y: h.region.y,
                 width: h.region.width,
@@ -90,6 +105,7 @@ async function loadData() {
                 title: h.content.title,
                 description: h.content.description,
                 image: h.content.image,
+                video: h.content.video || '',
                 sequence: h.sequence
             }));
 
@@ -164,15 +180,17 @@ function createHotspots() {
         const el = document.createElement('div');
         el.className = 'hotspot';
         el.dataset.id = hotspot.id;
+        el.dataset.type = hotspot.type || 'text';
         el.style.left = `${hotspot.x}px`;
         el.style.top = `${hotspot.y}px`;
         el.style.width = `${hotspot.width}px`;
         el.style.height = `${hotspot.height}px`;
 
-        // Add label for design mode (ID only, editable)
+        // Add label for design mode (ID + type indicator)
         const label = document.createElement('div');
         label.className = 'hotspot-label';
-        label.textContent = hotspot.id;
+        const typeIcon = hotspot.type === 'image' ? 'IMG' : hotspot.type === 'video' ? 'VID' : 'TXT';
+        label.textContent = `${hotspot.id} [${typeIcon}]`;
         label.addEventListener('click', (e) => {
             if (!designMode) return;
             e.stopPropagation();
@@ -240,14 +258,45 @@ function zoomToHotspot(hotspot) {
 // ============================================
 
 function showModal(hotspot) {
-    modalTitle.textContent = hotspot.title || '';
-    modalDescription.textContent = hotspot.description || '';
+    // Hide all modal body types first
+    modalBodyText.classList.add('hidden');
+    modalBodyImage.classList.add('hidden');
+    modalBodyVideo.classList.add('hidden');
 
-    if (hotspot.image) {
-        modalDetailImage.src = hotspot.image;
-        modalImageContainer.classList.remove('hidden');
+    // Stop any playing video
+    modalVideo.pause();
+
+    const type = hotspot.type || 'text';
+
+    // Set modal type for styling
+    const modalContent = document.querySelector('.modal-content');
+    modalContent.dataset.type = type;
+
+    if (type === 'image' && hotspot.image) {
+        // Image type: show full image
+        modalImageTitle.textContent = hotspot.title || '';
+        modalFullImage.src = hotspot.image;
+        modalBodyImage.classList.remove('hidden');
+    } else if (type === 'video' && hotspot.video) {
+        // Video type: show video player
+        modalVideoTitle.textContent = hotspot.title || '';
+        modalVideoSource.src = hotspot.video;
+        modalVideo.load();
+        modalVideo.play();
+        modalBodyVideo.classList.remove('hidden');
     } else {
-        modalImageContainer.classList.add('hidden');
+        // Text type (default): show title, description (with Markdown), optional image
+        modalTitle.textContent = hotspot.title || '';
+        const description = hotspot.description || '';
+        modalDescription.innerHTML = typeof marked !== 'undefined' ? marked.parse(description) : description;
+
+        if (hotspot.image) {
+            modalDetailImage.src = hotspot.image;
+            modalImageContainer.classList.remove('hidden');
+        } else {
+            modalImageContainer.classList.add('hidden');
+        }
+        modalBodyText.classList.remove('hidden');
     }
 
     modal.classList.remove('hidden');
@@ -255,6 +304,8 @@ function showModal(hotspot) {
 
 function hideModal() {
     modal.classList.add('hidden');
+    // Stop video playback when closing modal
+    modalVideo.pause();
 }
 
 // ============================================
@@ -338,7 +389,9 @@ const designPanel = document.getElementById('design-panel');
 const btnDesign = document.getElementById('btn-design');
 const btnExitDesign = document.getElementById('btn-exit-design');
 const btnSaveDesign = document.getElementById('btn-save-design');
-const btnAddHotspot = document.getElementById('btn-add-hotspot');
+const btnAddText = document.getElementById('btn-add-text');
+const btnAddImage = document.getElementById('btn-add-image');
+const btnAddVideo = document.getElementById('btn-add-video');
 
 let dragTarget = null;
 let resizeTarget = null;
@@ -389,6 +442,7 @@ function generateJSON() {
         hotspots: hotspots.map(h => ({
             id: h.id,
             name: h.name,
+            type: h.type || 'text',
             region: {
                 x: Math.round(h.x),
                 y: Math.round(h.y),
@@ -398,7 +452,8 @@ function generateJSON() {
             content: {
                 title: h.title,
                 description: h.description,
-                image: h.image || ""
+                image: h.image || "",
+                video: h.video || ""
             },
             sequence: h.sequence
         }))
@@ -454,7 +509,8 @@ function editHotspotId(hotspot, labelEl) {
                 hotspotEl.dataset.id = newId;
             }
         }
-        labelEl.textContent = hotspot.id;
+        const typeIcon = hotspot.type === 'image' ? 'IMG' : hotspot.type === 'video' ? 'VID' : 'TXT';
+        labelEl.textContent = `${hotspot.id} [${typeIcon}]`;
     };
 
     input.addEventListener('blur', saveId);
@@ -468,20 +524,22 @@ function editHotspotId(hotspot, labelEl) {
     });
 }
 
-function addHotspot() {
+function addHotspot(type = 'text') {
     const newId = (Math.max(...hotspots.map(h => parseInt(h.id) || 0), 0) + 1).toString();
 
-    // Place new hotspot at top-left visible area
+    // Place new hotspot in visible area (avoiding design panel at top-left)
     const newHotspot = {
         id: newId,
         name: `New ${newId}`,
-        x: 50,
-        y: 50,
+        type: type,
+        x: 250,
+        y: 250,
         width: 120,
         height: 60,
         title: '',
         description: '',
         image: '',
+        video: '',
         sequence: hotspots.length + 1
     };
     hotspots.push(newHotspot);
@@ -621,7 +679,9 @@ function onPointerUp(e) {
 btnDesign?.addEventListener('click', enterDesignMode);
 btnExitDesign?.addEventListener('click', exitDesignMode);
 btnSaveDesign?.addEventListener('click', saveDesign);
-btnAddHotspot?.addEventListener('click', addHotspot);
+btnAddText?.addEventListener('click', () => addHotspot('text'));
+btnAddImage?.addEventListener('click', () => addHotspot('image'));
+btnAddVideo?.addEventListener('click', () => addHotspot('video'));
 
 // ============================================
 // START APPLICATION

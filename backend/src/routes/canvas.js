@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
     const [canvasResult, settingsResult, hotspotsResult] = await Promise.all([
       pool.query('SELECT width, height FROM canvas_config WHERE id = 1'),
       pool.query('SELECT zoom_on_click, min_zoom, max_zoom FROM settings WHERE id = 1'),
-      pool.query('SELECT id, name, x, y, width, height, title, description, image, sequence FROM hotspots WHERE enabled = TRUE ORDER BY sequence'),
+      pool.query('SELECT id, name, type, x, y, width, height, title, description, image, video, sequence FROM hotspots WHERE enabled = TRUE ORDER BY sequence'),
     ]);
 
     const canvas = canvasResult.rows[0] || { width: 1376, height: 768 };
@@ -22,8 +22,9 @@ router.get('/', async (req, res) => {
     const hotspots = hotspotsResult.rows.map(row => ({
       id: row.id,
       name: row.name,
+      type: row.type || 'text',
       region: { x: row.x, y: row.y, width: row.width, height: row.height },
-      content: { title: row.title, description: row.description, image: row.image },
+      content: { title: row.title, description: row.description, image: row.image, video: row.video || '' },
       sequence: row.sequence,
     }));
 

@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS hotspots (
     title TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     image TEXT NOT NULL DEFAULT '',
+    video TEXT NOT NULL DEFAULT '',
+    type TEXT NOT NULL DEFAULT 'text',
     sequence INTEGER NOT NULL
 );
 

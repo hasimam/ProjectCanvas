@@ -8,15 +8,15 @@ router.use(auth);
 // Create or update a hotspot
 router.post('/hotspots', async (req, res) => {
   try {
-    const { id, name, enabled = true, region, content, sequence } = req.body;
+    const { id, name, enabled = true, type = 'text', region, content, sequence } = req.body;
     if (!id || !name || !region || !content || sequence == null) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     await pool.query(
-      `INSERT INTO hotspots (id, name, enabled, x, y, width, height, title, description, image, sequence)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-       ON CONFLICT (id) DO UPDATE SET name=$2, enabled=$3, x=$4, y=$5, width=$6, height=$7, title=$8, description=$9, image=$10, sequence=$11`,
-      [id, name, enabled, region.x, region.y, region.width, region.height, content.title, content.description || '', content.image || '', sequence]
+      `INSERT INTO hotspots (id, name, enabled, type, x, y, width, height, title, description, image, video, sequence)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       ON CONFLICT (id) DO UPDATE SET name=$2, enabled=$3, type=$4, x=$5, y=$6, width=$7, height=$8, title=$9, description=$10, image=$11, video=$12, sequence=$13`,
+      [id, name, enabled, type, region.x, region.y, region.width, region.height, content.title, content.description || '', content.image || '', content.video || '', sequence]
     );
     res.json({ ok: true });
   } catch (err) {
@@ -28,13 +28,13 @@ router.post('/hotspots', async (req, res) => {
 // Update a specific hotspot
 router.put('/hotspots/:id', async (req, res) => {
   try {
-    const { name, enabled, region, content, sequence } = req.body;
+    const { name, enabled, type, region, content, sequence } = req.body;
     const result = await pool.query(
-      `UPDATE hotspots SET name=COALESCE($1,name), enabled=COALESCE($2,enabled), x=COALESCE($3,x), y=COALESCE($4,y),
-       width=COALESCE($5,width), height=COALESCE($6,height), title=COALESCE($7,title),
-       description=COALESCE($8,description), image=COALESCE($9,image), sequence=COALESCE($10,sequence)
-       WHERE id=$11`,
-      [name, enabled, region?.x, region?.y, region?.width, region?.height, content?.title, content?.description, content?.image, sequence, req.params.id]
+      `UPDATE hotspots SET name=COALESCE($1,name), enabled=COALESCE($2,enabled), type=COALESCE($3,type), x=COALESCE($4,x), y=COALESCE($5,y),
+       width=COALESCE($6,width), height=COALESCE($7,height), title=COALESCE($8,title),
+       description=COALESCE($9,description), image=COALESCE($10,image), video=COALESCE($11,video), sequence=COALESCE($12,sequence)
+       WHERE id=$13`,
+      [name, enabled, type, region?.x, region?.y, region?.width, region?.height, content?.title, content?.description, content?.image, content?.video, sequence, req.params.id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true });
@@ -81,9 +81,9 @@ router.post('/bulk', async (req, res) => {
       await client.query('DELETE FROM hotspots');
       for (const h of hotspots) {
         await client.query(
-          `INSERT INTO hotspots (id, name, enabled, x, y, width, height, title, description, image, sequence)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-          [h.id, h.name, h.enabled !== false, h.region.x, h.region.y, h.region.width, h.region.height, h.content.title, h.content.description || '', h.content.image || '', h.sequence]
+          `INSERT INTO hotspots (id, name, enabled, type, x, y, width, height, title, description, image, video, sequence)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+          [h.id, h.name, h.enabled !== false, h.type || 'text', h.region.x, h.region.y, h.region.width, h.region.height, h.content.title, h.content.description || '', h.content.image || '', h.content.video || '', h.sequence]
         );
       }
     }
@@ -120,8 +120,9 @@ router.get('/export', async (req, res) => {
       const h = {
         id: row.id,
         name: row.name,
+        type: row.type || 'text',
         region: { x: row.x, y: row.y, width: row.width, height: row.height },
-        content: { title: row.title, description: row.description, image: row.image },
+        content: { title: row.title, description: row.description, image: row.image, video: row.video || '' },
         sequence: row.sequence,
       };
       if (!row.enabled) h.enabled = false;

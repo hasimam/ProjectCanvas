@@ -40,10 +40,10 @@ async function syncFromFile(filePath) {
           continue;
         }
         await client.query(
-          `INSERT INTO hotspots (id, name, enabled, x, y, width, height, title, description, image, sequence)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-           ON CONFLICT (id) DO UPDATE SET name=$2, enabled=$3, x=$4, y=$5, width=$6, height=$7, title=$8, description=$9, image=$10, sequence=$11`,
-          [h.id, h.name, h.enabled !== false, h.region.x, h.region.y, h.region.width, h.region.height, h.content.title, h.content.description || '', h.content.image || '', h.sequence]
+          `INSERT INTO hotspots (id, name, enabled, x, y, width, height, title, description, image, video, type, sequence)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+           ON CONFLICT (id) DO UPDATE SET name=$2, enabled=$3, x=$4, y=$5, width=$6, height=$7, title=$8, description=$9, image=$10, video=$11, type=$12, sequence=$13`,
+          [h.id, h.name, h.enabled !== false, h.region.x, h.region.y, h.region.width, h.region.height, h.content.title, h.content.description || '', h.content.image || '', h.content.video || '', h.type || 'text', h.sequence]
         );
         count++;
       }
@@ -74,8 +74,9 @@ async function exportData(outPath) {
   const hotspots = hotspotsResult.rows.map(row => {
     const h = {
       id: row.id, name: row.name,
+      type: row.type || 'text',
       region: { x: row.x, y: row.y, width: row.width, height: row.height },
-      content: { title: row.title, description: row.description, image: row.image },
+      content: { title: row.title, description: row.description, image: row.image, video: row.video || '' },
       sequence: row.sequence,
     };
     if (!row.enabled) h.enabled = false;
