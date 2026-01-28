@@ -257,6 +257,24 @@ function zoomToHotspot(hotspot) {
 // MODAL
 // ============================================
 
+function showLoading(container) {
+    // Remove existing loader if any
+    const existing = container.querySelector('.loading-container');
+    if (existing) existing.remove();
+
+    const loader = document.createElement('div');
+    loader.className = 'loading-container';
+    loader.innerHTML = '<div class="loading-spinner"></div><p>جاري التحميل...</p>';
+    container.appendChild(loader);
+    container.classList.add('is-loading');
+}
+
+function hideLoading(container) {
+    const loader = container.querySelector('.loading-container');
+    if (loader) loader.remove();
+    container.classList.remove('is-loading');
+}
+
 function showModal(hotspot) {
     // Hide all modal body types first
     modalBodyText.classList.add('hidden');
@@ -273,17 +291,45 @@ function showModal(hotspot) {
     modalContent.dataset.type = type;
 
     if (type === 'image' && hotspot.image) {
-        // Image type: show full image
+        // Image type: show full image with loading
         modalImageTitle.textContent = hotspot.title || '';
-        modalFullImage.src = hotspot.image;
         modalBodyImage.classList.remove('hidden');
+
+        // Show loading state
+        modalFullImage.classList.add('loading');
+        showLoading(modalBodyImage);
+
+        modalFullImage.onload = () => {
+            modalFullImage.classList.remove('loading');
+            hideLoading(modalBodyImage);
+        };
+        modalFullImage.onerror = () => {
+            hideLoading(modalBodyImage);
+            modalFullImage.classList.remove('loading');
+        };
+        modalFullImage.src = hotspot.image;
+
     } else if (type === 'video' && hotspot.video) {
-        // Video type: show video player
+        // Video type: show video player with loading
         modalVideoTitle.textContent = hotspot.title || '';
+        modalBodyVideo.classList.remove('hidden');
+
+        // Show loading state
+        modalVideo.classList.add('loading');
+        showLoading(modalBodyVideo);
+
+        modalVideo.onloadeddata = () => {
+            modalVideo.classList.remove('loading');
+            hideLoading(modalBodyVideo);
+            modalVideo.play();
+        };
+        modalVideo.onerror = () => {
+            hideLoading(modalBodyVideo);
+            modalVideo.classList.remove('loading');
+        };
         modalVideoSource.src = hotspot.video;
         modalVideo.load();
-        modalVideo.play();
-        modalBodyVideo.classList.remove('hidden');
+
     } else {
         // Text type (default): show title, description (with Markdown), optional image
         modalTitle.textContent = hotspot.title || '';
@@ -291,6 +337,18 @@ function showModal(hotspot) {
         modalDescription.innerHTML = typeof marked !== 'undefined' ? marked.parse(description) : description;
 
         if (hotspot.image) {
+            // Show loading for detail image
+            modalDetailImage.classList.add('loading');
+            showLoading(modalImageContainer);
+
+            modalDetailImage.onload = () => {
+                modalDetailImage.classList.remove('loading');
+                hideLoading(modalImageContainer);
+            };
+            modalDetailImage.onerror = () => {
+                hideLoading(modalImageContainer);
+                modalDetailImage.classList.remove('loading');
+            };
             modalDetailImage.src = hotspot.image;
             modalImageContainer.classList.remove('hidden');
         } else {
