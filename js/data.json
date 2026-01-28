@@ -549,6 +549,24 @@
         "video": ""
       },
       "sequence": 30
+    },
+    {
+      "id": "31",
+      "name": "New 31",
+      "type": "video",
+      "region": {
+        "x": 87,
+        "y": 49,
+        "width": 108,
+        "height": 110
+      },
+      "content": {
+        "title": "نحمل قلما نزرع فكرا.. نبني جيلا يصنع فجرا",
+        "description": "",
+        "image": "",
+        "video": "https://youtu.be/ZKz080KxF88?si=VvTBiop_DqSyE_JG"
+      },
+      "sequence": 30
     }
   ]
 }

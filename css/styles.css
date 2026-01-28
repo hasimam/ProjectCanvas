@@ -327,6 +327,18 @@ body {
     background-color: #000;
 }
 
+.modal-body-video iframe {
+    width: 85vw;
+    max-width: 960px;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    background-color: #000;
+}
+
+.modal-body-video iframe.hidden {
+    display: none;
+}
+
 /* Loading Spinner */
 .loading-container {
     display: flex;

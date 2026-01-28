@@ -50,6 +50,7 @@ const modalBodyVideo = document.querySelector('.modal-body-video');
 const modalVideoTitle = document.getElementById('modal-video-title');
 const modalVideo = document.getElementById('modal-video');
 const modalVideoSource = document.getElementById('modal-video-source');
+const modalYouTube = document.getElementById('modal-youtube');
 
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
@@ -254,6 +255,25 @@ function zoomToHotspot(hotspot) {
 }
 
 // ============================================
+// YOUTUBE HELPERS
+// ============================================
+
+function isYouTubeUrl(url) {
+    return /(?:youtube\.com\/(?:watch|embed)|youtu\.be\/)/.test(url);
+}
+
+function getYouTubeEmbedUrl(url) {
+    let videoId = '';
+    const watchMatch = url.match(/youtube\.com\/watch\?.*v=([^&]+)/);
+    const shortMatch = url.match(/youtu\.be\/([^?&]+)/);
+    const embedMatch = url.match(/youtube\.com\/embed\/([^?&]+)/);
+    if (watchMatch) videoId = watchMatch[1];
+    else if (shortMatch) videoId = shortMatch[1];
+    else if (embedMatch) videoId = embedMatch[1];
+    return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : '';
+}
+
+// ============================================
 // MODAL
 // ============================================
 
@@ -283,6 +303,7 @@ function showModal(hotspot) {
 
     // Stop any playing video
     modalVideo.pause();
+    modalYouTube.src = '';
 
     const type = hotspot.type || 'text';
 
@@ -314,21 +335,33 @@ function showModal(hotspot) {
         modalVideoTitle.textContent = hotspot.title || '';
         modalBodyVideo.classList.remove('hidden');
 
-        // Show loading state
-        modalVideo.classList.add('loading');
-        showLoading(modalBodyVideo);
+        if (isYouTubeUrl(hotspot.video)) {
+            // YouTube: use iframe embed
+            modalVideo.style.display = 'none';
+            modalYouTube.classList.remove('hidden');
+            modalYouTube.src = getYouTubeEmbedUrl(hotspot.video);
+        } else {
+            // Direct video file: use <video> element
+            modalYouTube.classList.add('hidden');
+            modalYouTube.src = '';
+            modalVideo.style.display = '';
 
-        modalVideo.onloadeddata = () => {
-            modalVideo.classList.remove('loading');
-            hideLoading(modalBodyVideo);
-            modalVideo.play();
-        };
-        modalVideo.onerror = () => {
-            hideLoading(modalBodyVideo);
-            modalVideo.classList.remove('loading');
-        };
-        modalVideoSource.src = hotspot.video;
-        modalVideo.load();
+            // Show loading state
+            modalVideo.classList.add('loading');
+            showLoading(modalBodyVideo);
+
+            modalVideo.onloadeddata = () => {
+                modalVideo.classList.remove('loading');
+                hideLoading(modalBodyVideo);
+                modalVideo.play();
+            };
+            modalVideo.onerror = () => {
+                hideLoading(modalBodyVideo);
+                modalVideo.classList.remove('loading');
+            };
+            modalVideoSource.src = hotspot.video;
+            modalVideo.load();
+        }
 
     } else {
         // Text type (default): show title, description (with Markdown), optional image
@@ -364,6 +397,8 @@ function hideModal() {
     modal.classList.add('hidden');
     // Stop video playback when closing modal
     modalVideo.pause();
+    // Stop YouTube playback by clearing iframe src
+    modalYouTube.src = '';
 }
 
 // ============================================
@@ -740,6 +775,34 @@ btnSaveDesign?.addEventListener('click', saveDesign);
 btnAddText?.addEventListener('click', () => addHotspot('text'));
 btnAddImage?.addEventListener('click', () => addHotspot('image'));
 btnAddVideo?.addEventListener('click', () => addHotspot('video'));
+
+// Make design panel draggable by its header
+(function() {
+    const header = document.querySelector('.design-header');
+    if (!header || !designPanel) return;
+    let dragging = false, dx = 0, dy = 0;
+    header.style.cursor = 'grab';
+    header.addEventListener('pointerdown', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        dragging = true;
+        header.style.cursor = 'grabbing';
+        const rect = designPanel.getBoundingClientRect();
+        dx = e.clientX - rect.left;
+        dy = e.clientY - rect.top;
+        header.setPointerCapture(e.pointerId);
+        e.preventDefault();
+    });
+    header.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        designPanel.style.left = `${e.clientX - dx}px`;
+        designPanel.style.top = `${e.clientY - dy}px`;
+        designPanel.style.right = 'auto';
+    });
+    header.addEventListener('pointerup', () => {
+        dragging = false;
+        header.style.cursor = 'grab';
+    });
+})();
 
 // ============================================
 // START APPLICATION
