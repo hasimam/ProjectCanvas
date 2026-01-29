@@ -83,7 +83,7 @@ async function loadData() {
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const apiUrl = (!isLocal && typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL)
             ? `${CONFIG.API_BASE_URL}/api/canvas`
-            : 'js/data.json?v=5';
+            : 'js/data.json?v=6';
         const response = await fetch(apiUrl);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
