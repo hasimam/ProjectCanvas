@@ -29,9 +29,9 @@ async function seed() {
     await client.query('DELETE FROM hotspots');
     for (const h of data.hotspots) {
       await client.query(
-        `INSERT INTO hotspots (id, name, enabled, x, y, width, height, title, description, image, sequence)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-        [h.id, h.name, h.enabled !== false, h.region.x, h.region.y, h.region.width, h.region.height, h.content.title, h.content.description || '', h.content.image || '', h.sequence]
+        `INSERT INTO hotspots (id, name, enabled, type, x, y, width, height, title, description, image, video, sequence)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [h.id, h.name, h.enabled !== false, h.type || 'text', h.region.x, h.region.y, h.region.width, h.region.height, h.content.title, h.content.description || '', h.content.image || '', h.content.video || '', h.sequence]
       );
     }
 
