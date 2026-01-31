@@ -68,10 +68,10 @@
       "name": "New 4",
       "type": "image",
       "region": {
-        "x": 1064,
-        "y": 325,
-        "width": 93,
-        "height": 171
+        "x": 1174,
+        "y": 556,
+        "width": 170,
+        "height": 67
       },
       "content": {
         "title": "الخريطة الذهنية",
@@ -86,10 +86,10 @@
       "name": "New 5",
       "type": "text",
       "region": {
-        "x": 965,
-        "y": 325,
-        "width": 95,
-        "height": 171
+        "x": 71,
+        "y": 392,
+        "width": 201,
+        "height": 68
       },
       "content": {
         "title": "الأثر المتوقع",
@@ -122,10 +122,10 @@
       "name": "New 7",
       "type": "text",
       "region": {
-        "x": 1184,
-        "y": 552,
-        "width": 160,
-        "height": 72
+        "x": 1248,
+        "y": 330,
+        "width": 87,
+        "height": 161
       },
       "content": {
         "title": "حول الفيديو والأنيميشن",
@@ -176,8 +176,8 @@
       "name": "New 10",
       "type": "video",
       "region": {
-        "x": 1176,
-        "y": 332,
+        "x": 1085,
+        "y": 331,
         "width": 157,
         "height": 159
       },
@@ -447,9 +447,9 @@
       "type": "text",
       "region": {
         "x": 159,
-        "y": 179,
-        "width": 123,
-        "height": 185
+        "y": 309,
+        "width": 124,
+        "height": 55
       },
       "content": {
         "title": "الفهرس",
@@ -464,10 +464,10 @@
       "name": "New 26",
       "type": "text",
       "region": {
-        "x": 74,
-        "y": 394,
-        "width": 184,
-        "height": 62
+        "x": 171,
+        "y": 180,
+        "width": 93,
+        "height": 121
       },
       "content": {
         "title": "المقدمة",
@@ -554,9 +554,9 @@
       "name": "New 31",
       "type": "video",
       "region": {
-        "x": 101,
-        "y": 461,
-        "width": 272,
+        "x": 103,
+        "y": 467,
+        "width": 268,
         "height": 74
       },
       "content": {
@@ -590,10 +590,10 @@
       "name": "New 33",
       "type": "image",
       "region": {
-        "x": 1178,
-        "y": 493,
-        "width": 154,
-        "height": 41
+        "x": 986,
+        "y": 331,
+        "width": 85,
+        "height": 158
       },
       "content": {
         "title": "شاركني رأيك!",
