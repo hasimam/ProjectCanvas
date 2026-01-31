@@ -76,7 +76,7 @@
       "content": {
         "title": "الخريطة الذهنية",
         "description": "",
-        "image": "https://res.cloudinary.com/dls0opziz/image/upload/v1769547888/New_4_l9l9aw.png, https://res.cloudinary.com/dls0opziz/image/upload/v1769860196/Brown_Beige_Vintage_Mind_Map_A4_a3a4sk.png",
+        "image": "https://res.cloudinary.com/dls0opziz/image/upload/v1769888180/abu_bakr_info_awvwua.png, https://res.cloudinary.com/dls0opziz/image/upload/v1769888180/abu_bakr_personality_xmqn3p.png",
         "video": ""
       },
       "sequence": 4
@@ -321,7 +321,7 @@
       "type": "text",
       "region": {
         "x": 830,
-        "y": 437,
+        "y": 433,
         "width": 134,
         "height": 41
       },
@@ -592,8 +592,8 @@
       "region": {
         "x": 986,
         "y": 331,
-        "width": 85,
-        "height": 158
+        "width": 88,
+        "height": 164
       },
       "content": {
         "title": "شاركني رأيك!",
