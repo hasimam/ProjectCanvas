@@ -584,6 +584,24 @@
         "video": ""
       },
       "sequence": 32
+    },
+    {
+      "id": "33",
+      "name": "New 33",
+      "type": "image",
+      "region": {
+        "x": 1178,
+        "y": 493,
+        "width": 154,
+        "height": 41
+      },
+      "content": {
+        "title": "شاركني رأيك!",
+        "description": "",
+        "image": "https://res.cloudinary.com/dls0opziz/image/upload/v1769864698/questions_with_text_b9lv92.png",
+        "video": ""
+      },
+      "sequence": 33
     }
   ]
 }
