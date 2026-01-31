@@ -43,7 +43,7 @@ const modalDetailImage = document.getElementById('modal-detail-image');
 // Image type elements
 const modalBodyImage = document.querySelector('.modal-body-image');
 const modalImageTitle = document.getElementById('modal-image-title');
-const modalFullImage = document.getElementById('modal-full-image');
+const modalImagesContainer = document.getElementById('modal-images-container');
 
 // Video type elements
 const modalBodyVideo = document.querySelector('.modal-body-video');
@@ -312,23 +312,52 @@ function showModal(hotspot) {
     modalContent.dataset.type = type;
 
     if (type === 'image' && hotspot.image) {
-        // Image type: show full image with loading
+        // Image type: show images with loading
         modalImageTitle.textContent = hotspot.title || '';
         modalBodyImage.classList.remove('hidden');
 
+        // Clear previous images
+        modalImagesContainer.innerHTML = '';
+
+        // Split by comma to support multiple images
+        const imageUrls = hotspot.image.split(',').map(url => url.trim()).filter(url => url);
+        const isMultiple = imageUrls.length > 1;
+
+        if (isMultiple) {
+            modalImagesContainer.classList.add('multi-image');
+        } else {
+            modalImagesContainer.classList.remove('multi-image');
+        }
+
         // Show loading state
-        modalFullImage.classList.add('loading');
         showLoading(modalBodyImage);
 
-        modalFullImage.onload = () => {
-            modalFullImage.classList.remove('loading');
-            hideLoading(modalBodyImage);
-        };
-        modalFullImage.onerror = () => {
-            hideLoading(modalBodyImage);
-            modalFullImage.classList.remove('loading');
-        };
-        modalFullImage.src = hotspot.image;
+        let loadedCount = 0;
+        const totalImages = imageUrls.length;
+
+        imageUrls.forEach((url, index) => {
+            const img = document.createElement('img');
+            img.classList.add('loading');
+            img.alt = `${hotspot.title || 'Image'} ${isMultiple ? index + 1 : ''}`;
+
+            img.onload = () => {
+                img.classList.remove('loading');
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    hideLoading(modalBodyImage);
+                }
+            };
+            img.onerror = () => {
+                img.classList.remove('loading');
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    hideLoading(modalBodyImage);
+                }
+            };
+
+            img.src = url;
+            modalImagesContainer.appendChild(img);
+        });
 
     } else if (type === 'video' && hotspot.video) {
         // Video type: show video player with loading

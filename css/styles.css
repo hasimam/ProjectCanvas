@@ -291,13 +291,28 @@ body {
     line-height: 1.6;
 }
 
+#modal-images-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    max-height: 75vh;
+    overflow-y: auto;
+    padding: 10px;
+}
+
 .modal-body-image img {
     max-width: 85vw;
-    max-height: 75vh;
+    max-height: 70vh;
     width: auto;
     height: auto;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* When multiple images, allow them to be smaller */
+#modal-images-container.multi-image img {
+    max-height: 60vh;
 }
 
 /* Video type modal */
