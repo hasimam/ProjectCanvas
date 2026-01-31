@@ -384,16 +384,36 @@ body {
 
 /* Hide media while loading */
 .modal-image img.loading,
-.modal-body-image img.loading,
 .modal-body-video video.loading {
     opacity: 0;
     position: absolute;
 }
 
+/* For image type modal with multiple images, use visibility to maintain layout */
+.modal-body-image img.loading {
+    visibility: hidden;
+    height: 100px; /* Placeholder height while loading */
+}
+
 .modal-image.is-loading,
-.modal-body-image.is-loading,
 .modal-body-video.is-loading {
     position: relative;
+}
+
+/* Loading spinner inside images container */
+#modal-images-container.is-loading {
+    position: relative;
+    min-height: 200px;
+}
+
+#modal-images-container .loading-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 10;
 }
 
 /* Control Panel */

@@ -329,8 +329,8 @@ function showModal(hotspot) {
             modalImagesContainer.classList.remove('multi-image');
         }
 
-        // Show loading state
-        showLoading(modalBodyImage);
+        // Show loading state inside images container
+        showLoading(modalImagesContainer);
 
         let loadedCount = 0;
         const totalImages = imageUrls.length;
@@ -344,14 +344,14 @@ function showModal(hotspot) {
                 img.classList.remove('loading');
                 loadedCount++;
                 if (loadedCount === totalImages) {
-                    hideLoading(modalBodyImage);
+                    hideLoading(modalImagesContainer);
                 }
             };
             img.onerror = () => {
                 img.classList.remove('loading');
                 loadedCount++;
                 if (loadedCount === totalImages) {
-                    hideLoading(modalBodyImage);
+                    hideLoading(modalImagesContainer);
                 }
             };
 
